@@ -1,5 +1,3 @@
-package com.skot.core
-
 abstract class Entity(val id: String, val movement: Int, val attack: Int, val constitution: Int) {
 
 }

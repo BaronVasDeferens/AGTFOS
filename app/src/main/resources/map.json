@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Main Cargo Hold",
+    "id": "MAIN_CARGO_HOLD",
+    "contiguousRooms": [],
+    "adjacentRooms": ["GALLEY"],
+    "startingWeapons": ["NET"]
+  },
+  {
+    "name": "Galley",
+    "id": "GALLEY",
+    "contiguousRooms": [],
+    "adjacentRooms": ["MAIN_CARGO_HOLD"],
+    "startingWeapons": ["ZOGWARTZ", "KNIFE"]
+  }
+]
