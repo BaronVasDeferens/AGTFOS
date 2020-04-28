@@ -40,5 +40,4 @@ data class GameState(val phase: GamePhase = GamePhase.CREW_PLACEMENT) {
 class GameManager {
 
 
-
 }

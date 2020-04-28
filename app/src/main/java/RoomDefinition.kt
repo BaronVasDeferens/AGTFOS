@@ -8,7 +8,8 @@ data class RoomDefinition(
     val id: String,
     val contiguousRooms: List<String>,
     val adjacentRooms: List<String>,
-    val startingWeapons: List<WeaponNames>
+    val startingWeapons: List<WeaponNames>,
+    val residentCrew: List<CrewDefinition> = listOf()
 )
 
 class MapDefinition {
@@ -24,7 +25,8 @@ class MapDefinition {
         val typeAdapter = Types.newParameterizedType(
             List::class.java,
             RoomDefinition::class.java,
-            WeaponNames::class.java
+            WeaponNames::class.java,
+            CrewDefinition::class.java
         )
         val adapter = moshi.adapter<List<RoomDefinition>>(typeAdapter)
         val listOfRooms = adapter.fromJson(data)!!

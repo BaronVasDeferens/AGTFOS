@@ -5,10 +5,20 @@ data class Room (val roomDefinition: RoomDefinition) {
 
     val adjacentRooms = mutableListOf<Room>()
     val contiguousRooms = mutableListOf<Room>()
+    val residentCrew = mutableListOf<Crewman>()
 
     val weapons = mutableListOf<Weapon>()
 
     init {
+
+        roomDefinition.residentCrew.forEach { crewDef ->
+            val crewMan = CrewMen.valueOf(crewDef.crewMenId).toCrewman()
+//            crewDef.weaponId?.apply {
+//                crewMan.carriedWeapon = Weapon.fromName(this)
+//            }
+            residentCrew.add(crewMan)
+        }
+
         roomDefinition.startingWeapons.forEach { weaponDef ->
             weapons.add(Weapon.fromName(weaponDef))
         }
@@ -23,8 +33,4 @@ data class Room (val roomDefinition: RoomDefinition) {
             roomMap[roomName]?.apply { contiguousRooms.add(this) }
         }
     }
-
-
-
-
 }

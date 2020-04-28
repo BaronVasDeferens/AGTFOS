@@ -4,7 +4,15 @@
     "id": "MAIN_CARGO_HOLD",
     "contiguousRooms": [],
     "adjacentRooms": ["GALLEY"],
-    "startingWeapons": ["NET"]
+    "startingWeapons": ["NET"],
+    "residentCrew": [
+      {
+        "crewMenId": "CAPTAIN_YID",
+        "weaponId": "ZOGWARTZ",
+        "isStunned": false,
+        "phaseOfLastAction": "CREW_PLACEMENT"
+      }
+    ]
   },
   {
     "name": "Galley",

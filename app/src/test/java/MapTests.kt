@@ -1,3 +1,4 @@
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 class MapTests {
@@ -16,6 +17,17 @@ class MapTests {
         val roomDefs = mapReader.readRoomDefinitions("map.json")
         val rooms = mapReader.createRoomList(roomDefs)
         assert(rooms.isNotEmpty())
+    }
+
+    @Test
+    fun `should read crewmen from map def`() {
+        val mapReader = MapDefinition()
+        val roomDefs = mapReader.readRoomDefinitions("map.json")
+        val cargoHold = mapReader.createRoomList(roomDefs)
+            .first { it.id == "MAIN_CARGO_HOLD" }
+
+        assertTrue(cargoHold.residentCrew.isNotEmpty())
+
     }
 
     @Test
