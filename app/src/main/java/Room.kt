@@ -12,15 +12,11 @@ data class Room (val roomDefinition: RoomDefinition) {
     init {
 
         roomDefinition.residentCrew.forEach { crewDef ->
-            val crewMan = CrewMen.valueOf(crewDef.crewMenId).toCrewman()
-//            crewDef.weaponId?.apply {
-//                crewMan.carriedWeapon = Weapon.fromName(this)
-//            }
-            residentCrew.add(crewMan)
+            residentCrew.add(Crewman.fromDefinition(crewDef))
         }
 
         roomDefinition.startingWeapons.forEach { weaponDef ->
-            weapons.add(Weapon.fromName(weaponDef))
+            weapons.add(Weapon.valueOf(weaponDef))
         }
     }
 

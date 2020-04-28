@@ -1,7 +1,8 @@
 abstract class Entity(
     open val movement: Int,
     open val attack: Int,
-    open val constitution: Int
+    open val constitution: Int,
+    open var isStunned: Boolean = false
 )
 
 enum class MonsterType(val movement: Int, val attack: Int, val constitution: Int) {
@@ -43,10 +44,25 @@ class Crewman(
     override val movement: Int,
     override val attack: Int,
     override val constitution: Int,
-    var carriedWeapon: Weapon? = null
+    override var isStunned: Boolean,
+    var carriedWeapon: Weapon? = null,
+    val phaseOfLastAction: GamePhase = GamePhase.CREW_PLACEMENT
+
 ) : Entity(
-    movement, attack, constitution
-)
+    movement, attack, constitution) {
+
+    companion object {
+        fun fromDefinition(def: CrewDefinition): Crewman {
+
+            val crew = CrewMen.valueOf(def.crewMenId).toCrewman()
+            def.weaponId?.apply {
+                crew.carriedWeapon = Weapon.valueOf(this)
+            }
+            return crew
+        }
+    }
+
+}
 
 enum class CrewMen(
     val fullName: String,
@@ -61,14 +77,14 @@ enum class CrewMen(
     MASCOT("Mascot", 1, 1, 1);
 
     fun toCrewman(): Crewman {
-        return Crewman(fullName, movement, attack, constitution)
+        return Crewman(fullName, movement, attack, constitution, false)
     }
 }
 
 class CrewDefinition(
     val crewMenId: String,
     val weaponId: String? = null,
-    val isStunned: Boolean,
+    val isStunned: Boolean = false,
     val phaseOfLastAction: GamePhase = GamePhase.CREW_PLACEMENT
 ) {
 

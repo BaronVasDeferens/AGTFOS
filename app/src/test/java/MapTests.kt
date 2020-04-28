@@ -10,7 +10,6 @@ class MapTests {
         assert(rooms.isNotEmpty())
     }
 
-
     @Test
     fun `should convert room definitions into rooms`() {
         val mapReader = MapDefinition()
@@ -27,7 +26,16 @@ class MapTests {
             .first { it.id == "MAIN_CARGO_HOLD" }
 
         assertTrue(cargoHold.residentCrew.isNotEmpty())
+    }
 
+    @Test
+    fun `can read carried weapon in map def`() {
+        val mapReader = MapDefinition()
+        val roomDefs = mapReader.readRoomDefinitions("map.json")
+        val cargoHold = mapReader.createRoomList(roomDefs)
+            .first { it.id == "MAIN_CARGO_HOLD" }
+        val captYid = cargoHold.residentCrew.first()
+        assertTrue(captYid.carriedWeapon == Weapon.ZOGWARTZ)
     }
 
     @Test
