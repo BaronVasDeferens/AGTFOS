@@ -1,3 +1,22 @@
+import RoomAdjacencyType.ADJACENT
+import RoomAdjacencyType.NOT
+
+enum class RoomAdjacencyType {
+    CONTIGUOUS,
+    ADJACENT,
+    NOT
+}
+
+/**
+ *   {
+"name": "",
+"id": "",
+"contiguousRooms": [],
+"startingWeapons": [],
+"residentCrew": []
+},
+ */
+
 data class Room (val roomDefinition: RoomDefinition) {
 
     val name = roomDefinition.name
@@ -28,5 +47,10 @@ data class Room (val roomDefinition: RoomDefinition) {
         roomDefinition.contiguousRooms.forEach{ roomName ->
             roomMap[roomName]?.apply { contiguousRooms.add(this) }
         }
+    }
+
+    fun getAdjacencyType(targetRoom: Room): RoomAdjacencyType {
+        if (contiguousRooms.any { it.id == targetRoom.id }) return RoomAdjacencyType.CONTIGUOUS
+        return if (adjacentRooms.any { it.id == targetRoom.id }) ADJACENT else NOT
     }
 }
