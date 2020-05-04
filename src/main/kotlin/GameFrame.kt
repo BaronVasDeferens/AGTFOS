@@ -116,6 +116,11 @@ object Game {
     }
 
 
+    data class Entity(var x: Int = 100, var y: Int = 100)
+
+    val entity = Entity()
+    private const val moveIncrement = 50
+
     @JvmStatic
     fun main(args: Array<String>) {
         gameFrame.display()
@@ -138,23 +143,23 @@ object Game {
                     when (keyPress) {
 
                         KeyInput.UP -> {
-
+                            entity.y -= moveIncrement
                         }
 
                         KeyInput.DOWN -> {
-
+                            entity.y += moveIncrement
                         }
 
                         KeyInput.LEFT -> {
-
+                            entity.x -= moveIncrement
                         }
 
                         KeyInput.RIGHT -> {
-
+                            entity.x += moveIncrement
                         }
 
                         KeyInput.PAUSE -> {
-                            continuousRender.set(!continuousRender.get())
+
                         }
 
                         KeyInput.QUIT -> {
@@ -165,6 +170,25 @@ object Game {
 
             }.launchIn(this)
         }
+
+        GlobalScope.launch{
+            val graphics = image.graphics as Graphics2D
+            graphics.addRenderingHints(RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON))
+
+            while (running.get()) {
+
+                graphics.color = Color.RED
+                graphics.fillRect(0,0,width, height)
+
+                graphics.color = Color.BLACK
+
+                val triangle = generateTriangle(entity.x, entity.y)
+                graphics.fillPolygon(triangle)
+                gameFrame.drawImage(image)
+            }
+
+        }
+
     }
 
     fun renderTriangles() {
