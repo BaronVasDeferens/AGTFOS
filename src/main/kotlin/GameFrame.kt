@@ -1,4 +1,10 @@
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.awt.*
 import java.awt.event.KeyEvent
@@ -12,10 +18,12 @@ import kotlin.random.Random
 import kotlin.system.exitProcess
 
 
+@FlowPreview
+@ExperimentalCoroutinesApi
 object Game {
 
-    private val width = 2560 + 200
-    private val height = 1440 + 200
+    private const val width = 800
+    private const val height = 800
 
     private val image = BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB)
 
@@ -23,6 +31,18 @@ object Game {
 
     private val continuousRender = AtomicBoolean(true)
     private val running = AtomicBoolean(true)
+
+    enum class KeyInput {
+        UP,
+        DOWN,
+        LEFT,
+        RIGHT,
+
+        PAUSE,
+
+        QUIT
+    }
+    val keyInputChannel = ConflatedBroadcastChannel<Set<KeyInput>>()
 
     private val keyListener = object : KeyListener {
         override fun keyTyped(e: KeyEvent?) {
@@ -34,15 +54,33 @@ object Game {
 
                 // PAUSE
                 KeyEvent.VK_SPACE -> {
-                    continuousRender.set(!continuousRender.get())
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.PAUSE))
                 }
+
                 //QUIT
                 KeyEvent.VK_ESCAPE -> {
-                    running.set(false)
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.QUIT))
                 }
                 // SAVE
-                KeyEvent.VK_ENTER -> {
-                    saveImageToDisk()
+//                KeyEvent.VK_ENTER -> {
+//                    saveImageToDisk()
+//                }
+
+                // DIRECTIONS
+                KeyEvent.VK_W -> {
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.UP))
+                }
+
+                KeyEvent.VK_A -> {
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.LEFT))
+                }
+
+                KeyEvent.VK_S -> {
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.DOWN))
+                }
+
+                KeyEvent.VK_D-> {
+                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.RIGHT))
                 }
 
             }
@@ -50,9 +88,33 @@ object Game {
 
         override fun keyReleased(e: KeyEvent?) {
 
+            when (e?.keyCode) {
+
+                // PAUSE
+                KeyEvent.VK_SPACE -> {
+                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.PAUSE))
+                }
+
+                KeyEvent.VK_W -> {
+                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.UP))
+                }
+
+                KeyEvent.VK_A -> {
+                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.LEFT))
+                }
+
+                KeyEvent.VK_S -> {
+                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.DOWN))
+                }
+
+                KeyEvent.VK_D-> {
+                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.RIGHT))
+                }
+            }
         }
 
     }
+
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -64,7 +126,48 @@ object Game {
 
     private fun startUp() {
 
+         // renderTriangles()
 
+        GlobalScope.launch {
+            keyInputChannel.offer(setOf())
+            keyInputChannel.asFlow().onEach { keyPresses ->
+                println(keyPresses)
+
+                keyPresses.forEach { keyPress ->
+
+                    when (keyPress) {
+
+                        KeyInput.UP -> {
+
+                        }
+
+                        KeyInput.DOWN -> {
+
+                        }
+
+                        KeyInput.LEFT -> {
+
+                        }
+
+                        KeyInput.RIGHT -> {
+
+                        }
+
+                        KeyInput.PAUSE -> {
+                            continuousRender.set(!continuousRender.get())
+                        }
+
+                        KeyInput.QUIT -> {
+                            exitProcess(0)
+                        }
+                    }
+                }
+
+            }.launchIn(this)
+        }
+    }
+
+    fun renderTriangles() {
         GlobalScope.launch {
 
             val graphics = image.graphics as Graphics2D
@@ -121,7 +224,6 @@ object Game {
         poly.addPoint(x + (sideLength / 2), y + tip)
         return poly
     }
-
 
     fun saveImageToDisk() {
         continuousRender.set(false)
