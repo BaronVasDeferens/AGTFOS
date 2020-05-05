@@ -131,9 +131,17 @@ object Game {
 
     private fun startUp() {
 
-         // renderTriangles()
+//        renderTriangles()
+        playGame()
 
+
+    }
+
+    fun playGame() {
         GlobalScope.launch {
+
+            val soundPlayer = SoundPlayer("walk.wav")
+
             keyInputChannel.offer(setOf())
             keyInputChannel.asFlow().onEach { keyPresses ->
                 println(keyPresses)
@@ -144,18 +152,22 @@ object Game {
 
                         KeyInput.UP -> {
                             entity.y -= moveIncrement
+                            soundPlayer.play()
                         }
 
                         KeyInput.DOWN -> {
                             entity.y += moveIncrement
+                            soundPlayer.play()
                         }
 
                         KeyInput.LEFT -> {
                             entity.x -= moveIncrement
+                            soundPlayer.play()
                         }
 
                         KeyInput.RIGHT -> {
                             entity.x += moveIncrement
+                            soundPlayer.play()
                         }
 
                         KeyInput.PAUSE -> {
@@ -188,7 +200,6 @@ object Game {
             }
 
         }
-
     }
 
     fun renderTriangles() {
@@ -204,7 +215,7 @@ object Game {
                 if (continuousRender.get()) {
                     val color = Color(
                         Random.nextInt(205) + 50,
-                        0,
+                        Random.nextInt(78),
                         Random.nextInt(255)
                     )
                     graphics.color = color
