@@ -42,7 +42,7 @@ object Game {
 
         QUIT
     }
-    val keyInputChannel = ConflatedBroadcastChannel<Set<KeyInput>>()
+    val keyInputChannel = ConflatedBroadcastChannel<KeyInput>()
 
     private val keyListener = object : KeyListener {
         override fun keyTyped(e: KeyEvent?) {
@@ -54,12 +54,12 @@ object Game {
 
                 // PAUSE
                 KeyEvent.VK_SPACE -> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.PAUSE))
+                    keyInputChannel.offer(KeyInput.PAUSE)
                 }
 
                 //QUIT
                 KeyEvent.VK_ESCAPE -> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.QUIT))
+                    keyInputChannel.offer(KeyInput.QUIT)
                 }
                 // SAVE
 //                KeyEvent.VK_ENTER -> {
@@ -68,19 +68,19 @@ object Game {
 
                 // DIRECTIONS
                 KeyEvent.VK_W -> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.UP))
+                    keyInputChannel.offer(KeyInput.UP)
                 }
 
                 KeyEvent.VK_A -> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.LEFT))
+                    keyInputChannel.offer(KeyInput.LEFT)
                 }
 
                 KeyEvent.VK_S -> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.DOWN))
+                    keyInputChannel.offer(KeyInput.DOWN)
                 }
 
                 KeyEvent.VK_D-> {
-                    keyInputChannel.offer(keyInputChannel.value.plus(KeyInput.RIGHT))
+                    keyInputChannel.offer(KeyInput.RIGHT)
                 }
 
             }
@@ -88,29 +88,6 @@ object Game {
 
         override fun keyReleased(e: KeyEvent?) {
 
-            when (e?.keyCode) {
-
-                // PAUSE
-                KeyEvent.VK_SPACE -> {
-                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.PAUSE))
-                }
-
-                KeyEvent.VK_W -> {
-                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.UP))
-                }
-
-                KeyEvent.VK_A -> {
-                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.LEFT))
-                }
-
-                KeyEvent.VK_S -> {
-                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.DOWN))
-                }
-
-                KeyEvent.VK_D-> {
-                    keyInputChannel.offer(keyInputChannel.value.minus(KeyInput.RIGHT))
-                }
-            }
         }
 
     }
@@ -142,11 +119,7 @@ object Game {
 
             val soundPlayer = SoundPlayer("walk.wav")
 
-            keyInputChannel.offer(setOf())
-            keyInputChannel.asFlow().onEach { keyPresses ->
-                println(keyPresses)
-
-                keyPresses.forEach { keyPress ->
+            keyInputChannel.asFlow().onEach { keyPress ->
 
                     when (keyPress) {
 
@@ -178,7 +151,7 @@ object Game {
                             exitProcess(0)
                         }
                     }
-                }
+
 
             }.launchIn(this)
         }
