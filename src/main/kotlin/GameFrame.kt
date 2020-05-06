@@ -253,7 +253,6 @@ class GameFrame (private val width: Int = 1000, private val height: Int = 1000){
     init {
         frame.title = "TEST"
 
-        frame.requestFocus()
         frame.setSize(width, height)
         frame.preferredSize = Dimension(width, height)
 
@@ -263,10 +262,12 @@ class GameFrame (private val width: Int = 1000, private val height: Int = 1000){
         frame.add(canvas)
         frame.defaultCloseOperation = JFrame.EXIT_ON_CLOSE
         frame.pack()
+
+        canvas.requestFocus()
     }
 
     fun setKeyListener(listener: KeyListener) {
-        frame.addKeyListener(listener)
+        canvas.addKeyListener(listener)
     }
 
     fun display() {
