@@ -92,10 +92,9 @@ object Game {
 
     }
 
+    val entity = Entity(100, 100, generateTriangle(100,100))
 
-    data class Entity(var x: Int = 100, var y: Int = 100)
 
-    val entity = Entity()
     private const val moveIncrement = 50
 
     @JvmStatic
@@ -124,22 +123,27 @@ object Game {
                     when (keyPress) {
 
                         KeyInput.UP -> {
-                            entity.y -= moveIncrement
+                            entity.adjustCoordinates(0, -moveIncrement)
+                            // entity.y -= moveIncrement
                             soundPlayer.play()
                         }
 
                         KeyInput.DOWN -> {
-                            entity.y += moveIncrement
+                            entity.adjustCoordinates(0, moveIncrement)
+//                            entity.y += moveIncrement
                             soundPlayer.play()
                         }
 
                         KeyInput.LEFT -> {
-                            entity.x -= moveIncrement
+                            entity.adjustCoordinates(-moveIncrement, 0)
+
+//                            entity.x -= moveIncrement
                             soundPlayer.play()
                         }
 
                         KeyInput.RIGHT -> {
-                            entity.x += moveIncrement
+                            entity.adjustCoordinates(moveIncrement, 0)
+//                            entity.x += moveIncrement
                             soundPlayer.play()
                         }
 
@@ -167,7 +171,7 @@ object Game {
 
                 graphics.color = Color.BLACK
 
-                val triangle = generateTriangle(entity.x, entity.y)
+                val triangle = entity.getPolyAtCoords()
                 graphics.fillPolygon(triangle)
                 gameFrame.drawImage(image)
             }
