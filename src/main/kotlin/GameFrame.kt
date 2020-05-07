@@ -1,3 +1,4 @@
+import Game.MouseInteractionType.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
@@ -7,8 +8,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.awt.*
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
+import java.awt.event.*
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -42,6 +42,7 @@ object Game {
 
         QUIT
     }
+
     val keyInputChannel = ConflatedBroadcastChannel<KeyInput>()
 
     private val keyListener = object : KeyListener {
@@ -79,7 +80,7 @@ object Game {
                     keyInputChannel.offer(KeyInput.DOWN)
                 }
 
-                KeyEvent.VK_D-> {
+                KeyEvent.VK_D -> {
                     keyInputChannel.offer(KeyInput.RIGHT)
                 }
 
@@ -92,7 +93,47 @@ object Game {
 
     }
 
-    val entity = Entity(100, 100, generateTriangle(100,100))
+    private val mouseListener = object : MouseListener {
+        override fun mouseReleased(e: MouseEvent?) {
+        }
+
+        override fun mouseEntered(e: MouseEvent?) {
+        }
+
+        override fun mouseClicked(e: MouseEvent?) {
+        }
+
+        override fun mouseExited(e: MouseEvent?) {
+        }
+
+        override fun mousePressed(e: MouseEvent?) {
+            entities.forEach { entity ->
+                if (entity.containsPoint(e!!.x, e!!.y)) {
+                    mouseInteractionChannel.offer(MouseInteraction(entity, ENTITY_CLICKED))
+                }
+            }
+        }
+    }
+
+    enum class MouseInteractionType {
+        ENTITY_CLICKED,
+        NOTHING_CLICKED
+    }
+
+    data class MouseInteraction(val entity: Entity, val interactionType: MouseInteractionType)
+
+    val mouseInteractionChannel = ConflatedBroadcastChannel<MouseInteraction>()
+
+
+    val entities = listOf<Entity>(
+        Entity(50, 50, generateTriangle(50, 50)),
+        Entity(100, 100, generateTriangle(100, 100)),
+        Entity(150, 150, generateTriangle(150, 150)),
+        Entity(200, 200, generateTriangle(200, 200)),
+        Entity(250, 250, generateTriangle(250, 250))
+    )
+
+    var currentEntity = entities[0]
 
 
     private const val moveIncrement = 50
@@ -101,6 +142,7 @@ object Game {
     fun main(args: Array<String>) {
         gameFrame.display()
         gameFrame.setKeyListener(keyListener)
+        gameFrame.setMouseListener(mouseListener)
         startUp()
     }
 
@@ -120,62 +162,74 @@ object Game {
 
             keyInputChannel.asFlow().onEach { keyPress ->
 
-                    when (keyPress) {
+                when (keyPress) {
 
-                        KeyInput.UP -> {
-                            entity.adjustCoordinates(0, -moveIncrement)
-                            // entity.y -= moveIncrement
-                            soundPlayer.play()
-                        }
-
-                        KeyInput.DOWN -> {
-                            entity.adjustCoordinates(0, moveIncrement)
-//                            entity.y += moveIncrement
-                            soundPlayer.play()
-                        }
-
-                        KeyInput.LEFT -> {
-                            entity.adjustCoordinates(-moveIncrement, 0)
-
-//                            entity.x -= moveIncrement
-                            soundPlayer.play()
-                        }
-
-                        KeyInput.RIGHT -> {
-                            entity.adjustCoordinates(moveIncrement, 0)
-//                            entity.x += moveIncrement
-                            soundPlayer.play()
-                        }
-
-                        KeyInput.PAUSE -> {
-
-                        }
-
-                        KeyInput.QUIT -> {
-                            exitProcess(0)
-                        }
+                    KeyInput.UP -> {
+                        currentEntity.adjustCoordinates(0, -moveIncrement)
+                        soundPlayer.play()
                     }
+
+                    KeyInput.DOWN -> {
+                        currentEntity.adjustCoordinates(0, moveIncrement)
+                        soundPlayer.play()
+                    }
+
+                    KeyInput.LEFT -> {
+                        currentEntity.adjustCoordinates(-moveIncrement, 0)
+                        soundPlayer.play()
+                    }
+
+                    KeyInput.RIGHT -> {
+                        currentEntity.adjustCoordinates(moveIncrement, 0)
+                        soundPlayer.play()
+                    }
+
+                    KeyInput.PAUSE -> {
+
+                    }
+
+                    KeyInput.QUIT -> {
+                        exitProcess(0)
+                    }
+                }
 
 
             }.launchIn(this)
+
+            mouseInteractionChannel.asFlow().onEach { interaction ->
+                when (interaction.interactionType) {
+                    ENTITY_CLICKED -> {
+                        currentEntity = interaction.entity
+                        println("Clicked on entity")
+                    }
+                }
+            }.launchIn(this)
         }
 
-        GlobalScope.launch{
+        GlobalScope.launch {
+
             val graphics = image.graphics as Graphics2D
-            graphics.addRenderingHints(RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON))
+
+            graphics.addRenderingHints(
+                RenderingHints(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+                )
+            )
 
             while (running.get()) {
 
-                graphics.color = Color.RED
-                graphics.fillRect(0,0,width, height)
+                graphics.color = Color.DARK_GRAY
+                graphics.fillRect(0, 0, width, height)
 
-                graphics.color = Color.BLACK
+                entities.forEach { entity ->
+                    graphics.color = if (entity == currentEntity) Color.RED else Color.BLUE
+                    val triangle = entity.getPolyAtAdjustedCoords()
+                    graphics.fillPolygon(triangle)
+                }
 
-                val triangle = entity.getPolyAtCoords()
-                graphics.fillPolygon(triangle)
                 gameFrame.drawImage(image)
             }
-
         }
     }
 
@@ -183,7 +237,12 @@ object Game {
         GlobalScope.launch {
 
             val graphics = image.graphics as Graphics2D
-            graphics.addRenderingHints(RenderingHints(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON))
+            graphics.addRenderingHints(
+                RenderingHints(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_ON
+                )
+            )
 
             var renderCount = 0
 
@@ -248,8 +307,7 @@ object Game {
 
 }
 
-class GameFrame (private val width: Int = 1000, private val height: Int = 1000){
-
+class GameFrame(private val width: Int = 1000, private val height: Int = 1000) {
 
     private val frame = JFrame()
     private val canvas = Canvas()
@@ -260,7 +318,6 @@ class GameFrame (private val width: Int = 1000, private val height: Int = 1000){
         frame.setSize(width, height)
         frame.preferredSize = Dimension(width, height)
 
-        canvas.background = Color.BLUE
         canvas.size = Dimension(width, height)
 
         frame.add(canvas)
@@ -274,17 +331,16 @@ class GameFrame (private val width: Int = 1000, private val height: Int = 1000){
         canvas.addKeyListener(listener)
     }
 
+    fun setMouseListener(listener: MouseListener) {
+        canvas.addMouseListener(listener)
+    }
+
     fun display() {
         frame.isVisible = true
     }
 
     fun drawImage(image: BufferedImage, x: Int = 0, y: Int = 0, clearBeforeDrawing: Boolean = false) {
         val graphics = canvas.graphics as Graphics2D
-
-        if (clearBeforeDrawing) {
-            graphics.clearRect(0, 0, width, height)
-        }
-
         graphics.drawImage(image, x, y, null)
         graphics.dispose()
     }
