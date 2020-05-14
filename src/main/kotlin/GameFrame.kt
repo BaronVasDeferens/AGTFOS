@@ -126,11 +126,12 @@ object Game {
 
 
     val entities = listOf<Entity>(
-        Entity(50, 50, generateTriangle(50, 50)),
-        Entity(100, 100, generateTriangle(100, 100)),
-        Entity(150, 150, generateTriangle(150, 150)),
-        Entity(200, 200, generateTriangle(200, 200)),
-        Entity(250, 250, generateTriangle(250, 250))
+        ImageEntity(50, 50, "explorer.png"),
+        ImageEntity(100, 100, "explorer.png"),
+        ImageEntity(150, 150, "explorer.png"),
+        ImageEntity(200, 200, "explorer.png"),
+        ImageEntity(250, 250, "explorer.png"),
+        PolygonEntity(300,300, generateTriangle(300, 300), Color.RED)
     )
 
     var currentEntity = entities[0]
@@ -148,11 +149,7 @@ object Game {
 
 
     private fun startUp() {
-
-//        renderTriangles()
         playGame()
-
-
     }
 
     fun playGame() {
@@ -219,13 +216,11 @@ object Game {
 
             while (running.get()) {
 
-                graphics.color = Color.DARK_GRAY
+                graphics.color = Color.LIGHT_GRAY
                 graphics.fillRect(0, 0, width, height)
 
                 entities.forEach { entity ->
-                    graphics.color = if (entity == currentEntity) Color.RED else Color.BLUE
-                    val triangle = entity.getPolyAtAdjustedCoords()
-                    graphics.fillPolygon(triangle)
+                    entity.applyImage(graphics)
                 }
 
                 gameFrame.drawImage(image)
