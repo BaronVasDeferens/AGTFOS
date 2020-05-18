@@ -1,17 +1,28 @@
 import java.awt.Color
 import java.awt.Graphics2D
+import java.awt.Point
 import java.awt.Polygon
 import java.awt.image.BufferedImage
+import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
-abstract class Entity (
-    open var x: Int = 100,
-    open var y: Int = 100) {
+abstract class Entity(
+    initialX: Int = 100,
+    initialY: Int = 100
+){
+
+    open val x = AtomicInteger(initialX)
+    open val y = AtomicInteger(initialY)
+
+
 
     fun adjustCoordinates(xAdj: Int, yAdj: Int) {
-        x += xAdj
-        y += yAdj
+        x.set( x.get() + xAdj)
+        y.set( x.get() + yAdj)
     }
+
+    abstract fun centerOnPoint(point: Point)
+
 
     abstract fun applyImage(graphics: Graphics2D)
     abstract fun containsPoint(clickX: Int, clickY: Int): Boolean
@@ -20,11 +31,17 @@ abstract class Entity (
 }
 
 
-data class PolygonEntity (
-    override var x: Int = 100,
-    override var y: Int = 100,
+data class PolygonEntity(
+    val initialX: Int = 100,
+    val initialY: Int = 100,
     val polygon: Polygon,
-    val polygonColor: Color): Entity(x,y) {
+    val polygonColor: Color
+) : Entity(initialX, initialY) {
+
+    override fun centerOnPoint(point: Point) {
+
+
+    }
 
     override fun applyImage(graphics: Graphics2D) {
         graphics.color = polygonColor
@@ -34,7 +51,7 @@ data class PolygonEntity (
     fun getPolyAtAdjustedCoords(): Polygon {
         val newPoly = Polygon()
         for (i in 0 until polygon.npoints) {
-            newPoly.addPoint(polygon.xpoints[i] + x, polygon.ypoints[i] + y)
+            newPoly.addPoint(polygon.xpoints[i] + x.get(), polygon.ypoints[i] + y.get())
         }
         return newPoly
     }
@@ -47,19 +64,25 @@ data class PolygonEntity (
 }
 
 
- data class ImageEntity(
-     override var x: Int = 100,
-     override var y: Int = 100,
-     val imageName: String): Entity(x,y) {
+data class ImageEntity(
+    val initialX: Int = 100,
+    val initialY: Int = 100,
+    val imageName: String
+) : Entity(initialX, initialY) {
 
     val image: BufferedImage = ImageIO.read(this.javaClass.getResourceAsStream(imageName))
 
-    override fun applyImage(graphics: Graphics2D) {
-        graphics.drawImage(image, x, y , null)
+    override fun centerOnPoint(point: Point) {
+        x.set(point.x - (image.width / 2))
+        y.set(point.y - (image.height / 2))
     }
 
-     override fun containsPoint(clickX: Int, clickY: Int): Boolean {
-         return (clickX >= x) && (clickX <= x + image.width) && (clickY >= y) && (clickY <= y + image.height)
-     }
+    override fun applyImage(graphics: Graphics2D) {
+        graphics.drawImage(image, x.get(), y.get(), null)
+    }
+
+    override fun containsPoint(clickX: Int, clickY: Int): Boolean {
+        return (clickX >= x.get()) && (clickX <= x.get() + image.width) && (clickY >= y.get()) && (clickY <= y.get() + image.height)
+    }
 
 }

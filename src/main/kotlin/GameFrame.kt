@@ -1,4 +1,4 @@
-import Game.MouseInteractionType.*
+import Game.MouseClickType.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.GlobalScope
@@ -8,12 +8,16 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.KeyEvent
+import java.awt.event.KeyListener
+import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.awt.image.BufferedImage
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.imageio.ImageIO
 import javax.swing.JFrame
+import javax.swing.event.MouseInputAdapter
 import kotlin.random.Random
 import kotlin.system.exitProcess
 
@@ -52,36 +56,9 @@ object Game {
 
         override fun keyPressed(e: KeyEvent?) {
             when (e?.keyCode) {
-
-                // PAUSE
-                KeyEvent.VK_SPACE -> {
-                    keyInputChannel.offer(KeyInput.PAUSE)
-                }
-
                 //QUIT
                 KeyEvent.VK_ESCAPE -> {
                     keyInputChannel.offer(KeyInput.QUIT)
-                }
-                // SAVE
-//                KeyEvent.VK_ENTER -> {
-//                    saveImageToDisk()
-//                }
-
-                // DIRECTIONS
-                KeyEvent.VK_W -> {
-                    keyInputChannel.offer(KeyInput.UP)
-                }
-
-                KeyEvent.VK_A -> {
-                    keyInputChannel.offer(KeyInput.LEFT)
-                }
-
-                KeyEvent.VK_S -> {
-                    keyInputChannel.offer(KeyInput.DOWN)
-                }
-
-                KeyEvent.VK_D -> {
-                    keyInputChannel.offer(KeyInput.RIGHT)
                 }
 
             }
@@ -93,36 +70,43 @@ object Game {
 
     }
 
-    private val mouseListener = object : MouseListener {
-        override fun mouseReleased(e: MouseEvent?) {
-        }
 
-        override fun mouseEntered(e: MouseEvent?) {
-        }
+    enum class MouseClickType {
+        NADA,
+        MOUSE_MOVE,
+        MOUSE_CLICK_PRIMARY_DOWN,
+        MOUSE_CLICK_PRIMARY_UP,
+        MOUSE_CLICK_PRIMARY_DRAG
+    }
 
-        override fun mouseClicked(e: MouseEvent?) {
-        }
+    data class MouseClick(val type: MouseClickType, val point: Point)
 
-        override fun mouseExited(e: MouseEvent?) {
-        }
+    val mouseClickChannel = ConflatedBroadcastChannel<MouseClick>()
+    val mouseMotionChannel = ConflatedBroadcastChannel<Point>()
+
+
+    private val mouseClickAdapter = object : MouseInputAdapter() {
 
         override fun mousePressed(e: MouseEvent?) {
-            entities.forEach { entity ->
-                if (entity.containsPoint(e!!.x, e!!.y)) {
-                    mouseInteractionChannel.offer(MouseInteraction(entity, ENTITY_CLICKED))
-                }
-            }
+            super.mousePressed(e)
+            mouseClickChannel.offer(MouseClick(MOUSE_CLICK_PRIMARY_DOWN, e!!.point))
+        }
+
+        override fun mouseReleased(e: MouseEvent?) {
+            super.mouseReleased(e)
+            mouseClickChannel.offer(MouseClick(MOUSE_CLICK_PRIMARY_UP, e!!.point))
+        }
+
+        override fun mouseMoved(e: MouseEvent?) {
+            super.mouseMoved(e)
+            mouseClickChannel.offer(MouseClick(MOUSE_MOVE, e!!.point))
+        }
+
+        override fun mouseDragged(e: MouseEvent?) {
+            super.mouseDragged(e)
+            mouseClickChannel.offer(MouseClick(MOUSE_CLICK_PRIMARY_DRAG, e!!.point))
         }
     }
-
-    enum class MouseInteractionType {
-        ENTITY_CLICKED,
-        NOTHING_CLICKED
-    }
-
-    data class MouseInteraction(val entity: Entity, val interactionType: MouseInteractionType)
-
-    val mouseInteractionChannel = ConflatedBroadcastChannel<MouseInteraction>()
 
 
     val entities = listOf<Entity>(
@@ -131,7 +115,7 @@ object Game {
         ImageEntity(150, 150, "explorer.png"),
         ImageEntity(200, 200, "explorer.png"),
         ImageEntity(250, 250, "explorer.png"),
-        PolygonEntity(300,300, generateTriangle(300, 300), Color.RED)
+        PolygonEntity(300, 300, generateTriangle(300, 300), Color.RED)
     )
 
     var currentEntity = entities[0]
@@ -139,11 +123,15 @@ object Game {
 
     private const val moveIncrement = 50
 
+    var targetEntity: Entity? = null
+
     @JvmStatic
     fun main(args: Array<String>) {
         gameFrame.display()
         gameFrame.setKeyListener(keyListener)
-        gameFrame.setMouseListener(mouseListener)
+        gameFrame.setMouseAdapter(mouseClickAdapter)
+
+        mouseClickChannel.offer(MouseClick(NADA, Point()))
         startUp()
     }
 
@@ -155,52 +143,50 @@ object Game {
     fun playGame() {
         GlobalScope.launch {
 
-            val soundPlayer = SoundPlayer("walk.wav")
 
-            keyInputChannel.asFlow().onEach { keyPress ->
+            mouseClickChannel.asFlow()
+                .onEach { click: MouseClick ->
 
-                when (keyPress) {
 
-                    KeyInput.UP -> {
-                        currentEntity.adjustCoordinates(0, -moveIncrement)
-                        soundPlayer.play()
+                    println("${click.type} ${click.point}")
+
+                    when (click.type) {
+
+                        MOUSE_CLICK_PRIMARY_DOWN -> {
+                            // Has user clicked an Entity?
+                            entities.firstOrNull { it.containsPoint(click.point.x, click.point.y) }?.apply {
+                                targetEntity = this
+                                println(">>> ENTITY TARGETED: $targetEntity")
+                            }
+
+                        }
+
+                        MOUSE_CLICK_PRIMARY_UP -> {
+                            targetEntity = null
+                        }
+
+                        MOUSE_CLICK_PRIMARY_DRAG -> {
+                            targetEntity?.apply {
+                                centerOnPoint(click.point)
+                                println("${x.get()}, ${y.get()}")
+                            }
+                        }
+
+                        else -> {
+
+                        }
                     }
 
-                    KeyInput.DOWN -> {
-                        currentEntity.adjustCoordinates(0, moveIncrement)
-                        soundPlayer.play()
-                    }
+                }.launchIn(this)
 
-                    KeyInput.LEFT -> {
-                        currentEntity.adjustCoordinates(-moveIncrement, 0)
-                        soundPlayer.play()
-                    }
-
-                    KeyInput.RIGHT -> {
-                        currentEntity.adjustCoordinates(moveIncrement, 0)
-                        soundPlayer.play()
-                    }
-
-                    KeyInput.PAUSE -> {
-
-                    }
-
+            keyInputChannel.asFlow().onEach { input ->
+                when (input) {
                     KeyInput.QUIT -> {
                         exitProcess(0)
                     }
                 }
-
-
             }.launchIn(this)
 
-            mouseInteractionChannel.asFlow().onEach { interaction ->
-                when (interaction.interactionType) {
-                    ENTITY_CLICKED -> {
-                        currentEntity = interaction.entity
-                        println("Clicked on entity")
-                    }
-                }
-            }.launchIn(this)
         }
 
         GlobalScope.launch {
@@ -328,6 +314,11 @@ class GameFrame(private val width: Int = 1000, private val height: Int = 1000) {
 
     fun setMouseListener(listener: MouseListener) {
         canvas.addMouseListener(listener)
+    }
+
+    fun setMouseAdapter(clickListener: MouseInputAdapter) {
+        canvas.addMouseMotionListener(clickListener)
+        canvas.addMouseListener(clickListener)
     }
 
     fun display() {
