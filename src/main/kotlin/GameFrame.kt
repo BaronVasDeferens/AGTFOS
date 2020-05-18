@@ -82,7 +82,6 @@ object Game {
     data class MouseClick(val type: MouseClickType, val point: Point)
 
     val mouseClickChannel = ConflatedBroadcastChannel<MouseClick>()
-    val mouseMotionChannel = ConflatedBroadcastChannel<Point>()
 
 
     private val mouseClickAdapter = object : MouseInputAdapter() {
@@ -148,8 +147,6 @@ object Game {
                 .onEach { click: MouseClick ->
 
 
-                    println("${click.type} ${click.point}")
-
                     when (click.type) {
 
                         MOUSE_CLICK_PRIMARY_DOWN -> {
@@ -168,7 +165,6 @@ object Game {
                         MOUSE_CLICK_PRIMARY_DRAG -> {
                             targetEntity?.apply {
                                 centerOnPoint(click.point)
-                                println("${x.get()}, ${y.get()}")
                             }
                         }
 
@@ -206,7 +202,12 @@ object Game {
                 graphics.fillRect(0, 0, width, height)
 
                 entities.forEach { entity ->
-                    entity.applyImage(graphics)
+                    if (entity == targetEntity) {
+                        entity.applyImage(graphics, listOf(RenderingDirective.DRAW_RED_BORDER))
+                    } else {
+                        entity.applyImage(graphics)
+                    }
+
                 }
 
                 gameFrame.drawImage(image)
