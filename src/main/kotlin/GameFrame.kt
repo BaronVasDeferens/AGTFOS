@@ -109,7 +109,7 @@ object Game {
 
 
     val entities = listOf<Entity>(
-        ImageEntity(50, 50, "explorer.png"),
+        ImageEntity(50, 50, "crab.png"),
         ImageEntity(100, 100, "explorer.png"),
         ImageEntity(150, 150, "explorer.png"),
         ImageEntity(200, 200, "explorer.png"),
