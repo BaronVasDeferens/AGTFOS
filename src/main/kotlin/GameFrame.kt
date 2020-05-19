@@ -155,7 +155,6 @@ object Game {
                                 targetEntity = this
                                 println(">>> ENTITY TARGETED: $targetEntity")
                             }
-
                         }
 
                         MOUSE_CLICK_PRIMARY_UP -> {
